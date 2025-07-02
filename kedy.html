@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Kedi Oyunu</title>
+  <style>
+    body { margin:0; overflow:hidden; background:skyblue; }
+    canvas { display:block; margin:0 auto; background:skyblue; border:1px solid black; }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="600" height="300"></canvas>
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const groundY = 250;
+
+    const player = {
+      x: 50,
+      y: groundY - 50,
+      width: 50,
+      height: 50,
+      dy: 0,
+      gravity: 0.7,
+      jumpPower: -15,
+      grounded: true
+    };
+
+    const catImg = new Image();
+    catImg.src = "https://i.imgur.com/J9zM2Y7.png"; // Kedi resmi
+
+    let obstacle = {
+      x: canvas.width,
+      y: groundY - 40,
+      width: 40,
+      height: 40,
+      speed: 5
+    };
+
+    let gameOver = false;
+
+    document.addEventListener("keydown", e => {
+      if(e.code === "Space" && player.grounded && !gameOver) {
+        player.dy = player.jumpPower;
+        player.grounded = false;
+      }
+      if(e.code === "Enter" && gameOver) {
+        restart();
+      }
+    });
+
+    function restart() {
+      gameOver = false;
+      player.y = groundY - player.height;
+      player.dy = 0;
+      player.grounded = true;
+      obstacle.x = canvas.width;
+      loop();
+    }
+
+    function loop() {
+      if(gameOver) {
+        draw();
+        return;
+      }
+
+      player.dy += player.gravity;
+      player.y += player.dy;
+
+      if(player.y + player.height >= groundY) {
+        player.y = groundY - player.height;
+        player.dy = 0;
+        player.grounded = true;
+      }
+
+      obstacle.x -= obstacle.speed;
+      if(obstacle.x + obstacle.width < 0) {
+        obstacle.x = canvas.width;
+      }
+
+      if(
+        player.x < obstacle.x + obstacle.width &&
+        player.x + player.width > obstacle.x &&
+        player.y < obstacle.y + obstacle.height &&
+        player.y + player.height > obstacle.y
+      ) {
+        gameOver = true;
+      }
+
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = "green";
+      ctx.fillRect(0, groundY, canvas.width, canvas.height - groundY);
+
+      // Kedi resmi çiz
+      if(catImg.complete) {
+        ctx.drawImage(catImg, player.x, player.y, player.width, player.height);
+      } else {
+        ctx.fillStyle = "orange";
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+      }
+
+      ctx.fillStyle = "black";
+      ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+
+      if(gameOver) {
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "white";
+        ctx.font = "36px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2);
+        ctx.font = "18px Arial";
+        ctx.fillText("Yeniden başlamak için ENTER'a basın", canvas.width / 2, canvas.height / 2 + 30);
+      }
+    }
+
+    loop();
+  </script>
+</body>
+</html>
